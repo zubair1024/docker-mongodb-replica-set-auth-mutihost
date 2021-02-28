@@ -1,0 +1,49 @@
+version: "3.9"
+
+services:
+  mongo1:
+    hostname: "mongo1"
+    container_name: "mongo1"
+    image: "mongo:4.4-bionic"
+    restart: "on-failure"
+    extra_hosts:
+      - "mongo1:${MONGO1_ADDR}"
+      - "mongo2:${MONGO2_ADDR}"
+      - "mongo3:${MONGO3_ADDR}"
+    command:
+      [
+        "-f",
+        "/etc/mongod.conf",
+        "--keyFile",
+        "/auth/file.key",
+        "--replSet",
+        "${MONGO_REPLICA_SET_NAME}",
+        "--bind_ip_all",
+        "--port",
+        "30001",
+      ]
+    expose:
+      - 30001
+    ports:
+      - 30001:30001
+    volumes:
+      - ./data/mongo1:/data/db
+      # - ./logs/mongo1:/var/log/mongodb
+      - ./scripts/:/docker-entrypoint-initdb.d/
+      - ./config/mongod.conf:/etc/mongod.conf
+      - ./auth/file.key:/auth/file.key
+    healthcheck:
+      test: test $$(echo "rs.status().ok" | mongo -u $${MONGO_INITDB_ROOT_USERNAME} -p $${MONGO_INITDB_ROOT_PASSWORD} --quiet) -eq 1
+      interval: 30s
+      start_period: 60s
+    env_file:
+      - .env
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE}
+    logging:
+      driver: "json-file"
+      options:
+        max-file: "5"
+        max-size: "500m"

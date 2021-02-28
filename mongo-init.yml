@@ -1,0 +1,28 @@
+version: "3.9" # Docker Engine release 19.03.0+ [https://docs.docker.com/compose/compose-file/]
+
+services:
+  # setup MongoDB cluster for production
+  mongo-replica-setup:
+    container_name: mongo-setup
+    image: "mongo:4.4-bionic"
+    extra_hosts:
+      - "mongo1:${MONGO1_ADDR}"
+      - "mongo2:${MONGO2_ADDR}"
+      - "mongo3:${MONGO3_ADDR}"
+    restart: on-failure
+    volumes:
+      - ./init/mongo-setup.sh:/scripts/mongo-setup.sh
+    entrypoint: ["bash", "/scripts/mongo-setup.sh"]
+    env_file:
+      - .env
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+
+volumes:
+  dataMongo1:
+  dataMongo2:
+  dataMongo3:
+  logMongo1:
+  logMongo2:
+  logMongo3:

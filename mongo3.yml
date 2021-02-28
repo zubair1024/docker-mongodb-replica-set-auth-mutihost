@@ -1,0 +1,44 @@
+version: "3.9"
+
+services:
+  mongo3:
+    hostname: "mongo3"
+    container_name: "mongo3"
+    image: "mongo:4.4-bionic"
+    extra_hosts:
+      - "mongo1:${MONGO1_ADDR}"
+      - "mongo2:${MONGO2_ADDR}"
+      - "mongo3:${MONGO3_ADDR}"
+    command:
+      [
+        "-f",
+        "/etc/mongod.conf",
+        "--keyFile",
+        "/auth/file.key",
+        "--replSet",
+        "${MONGO_REPLICA_SET_NAME}",
+        "--bind_ip_all",
+        "--port",
+        "30003",
+      ]
+    restart: "on-failure"
+    expose:
+      - 30003
+    ports:
+      - 30003:30003
+    volumes:
+      - ./data/mongo3:/data/db
+      # - ./logs/mongo3:/var/log/mongodb
+      - ./config/mongod.conf:/etc/mongod.conf
+      - ./auth/file.key:/auth/file.key
+    env_file:
+      - .env
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE}
+    logging:
+      driver: "json-file"
+      options:
+        max-file: "5"
+        max-size: "500m"
